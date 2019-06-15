@@ -57,26 +57,30 @@ void copyToTemp(fs::path &path, fs::path* pTempPath)
 void process(const fs::path &path, const fs::path &tempPath)
 {
     const fs::path runnerAppZip = tempPath.parent_path() /  "Runner.app.zip";
+    const fs::path payload = tempPath.parent_path() /       "Payload";
     const fs::path payloadZip = tempPath.parent_path() /    "Payload.zip";
     const fs::path payloadIpa = path.parent_path() /        "Payload.ipa";
 
     CComBSTR fileToUnzip(runnerAppZip.string().c_str());
     CComBSTR folderToUnzipTo(tempPath.parent_path().string().c_str());
 
-    CComBSTR folderToZip(tempPath.string().c_str());
+    CComBSTR folderToZip(payload.string().c_str());
     CComBSTR folderToZipTo(payloadZip.string().c_str());
 
 
     std::cout << "Processing..." << std::endl;
 
-    fs::rename(tempPath, runnerAppZip);                                 // Runner.app to Runner.app.zip
+    fs::rename(tempPath, runnerAppZip);                                 // Rename Runner.app to Runner.app.zip
 
     if (!Unzip2Folder(fileToUnzip, folderToUnzipTo))                    // Unzip Runner.app.zip to Runner.app (Folder)
     {
         throw std::exception("Unzipping failed");
     }
 
-    if (!zipFolder(folderToZip, folderToZipTo, payloadZip.string()))    // Zip folder Runner.app into Payload.zip
+    fs::create_directories(payload);                                    // Create folder called Payload
+    fs::rename(tempPath, payload / tempPath.filename());                // Move Runner.app into Payload
+
+    if (!zipFolder(folderToZip, folderToZipTo, payloadZip.string()))    // Zip folder Payload into Payload.zip
     {
         throw std::exception("Zipping failed");
     }
