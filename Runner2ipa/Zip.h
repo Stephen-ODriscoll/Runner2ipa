@@ -45,7 +45,7 @@ bool zipFolder(BSTR source, BSTR dest, std::string destString)
     for (int i = 0; FilesCount == 0; ++i)
     {
         pToFolder->Items(&pFilesInside);
-        if (!pFilesInside || i > 60)
+        if (!pFilesInside || i > 30)
         {
             pToFolder->Release();
             pISD->Release();
@@ -53,7 +53,7 @@ bool zipFolder(BSTR source, BSTR dest, std::string destString)
         }
 
         pFilesInside->get_Count(&FilesCount);
-        Sleep(500);
+        Sleep(1000);
     }
 
     pToFolder->Release();
