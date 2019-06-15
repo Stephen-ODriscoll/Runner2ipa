@@ -11,6 +11,7 @@ bool zipFolder(BSTR source, BSTR dest, std::string destString)
     fopen_s(&f, destString.c_str(), "wb");
     fwrite("\x50\x4B\x05\x06\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 22, 1, f);
     fclose(f);
+    Sleep(500);
 
     long FilesCount = 0;
     IShellDispatch *pISD;
@@ -45,7 +46,7 @@ bool zipFolder(BSTR source, BSTR dest, std::string destString)
     for (int i = 0; FilesCount == 0; ++i)
     {
         pToFolder->Items(&pFilesInside);
-        if (!pFilesInside || i > 30)
+        if (!pFilesInside || i > 60)
         {
             pToFolder->Release();
             pISD->Release();
@@ -53,7 +54,7 @@ bool zipFolder(BSTR source, BSTR dest, std::string destString)
         }
 
         pFilesInside->get_Count(&FilesCount);
-        Sleep(1000);
+        Sleep(500);
     }
 
     pToFolder->Release();
