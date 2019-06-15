@@ -11,7 +11,7 @@ namespace fs = std::experimental::filesystem;
 
 void getFile(fs::path &path)
 {
-    //Open file explorer and set path to the path of the selected file
+    // Open file explorer and set path to the path of the selected file
     OPENFILENAME fileName;
     char szFile[100];
 
@@ -33,61 +33,65 @@ void getFile(fs::path &path)
 }
 
 
-void process(const fs::path &path)
+void copyToTemp(fs::path &path, fs::path* pTempPath)
 {
-    static const fs::path s_runnerAppZip = path.parent_path() /   "Runner.app.zip";
-    static const fs::path s_payloadZip = path.parent_path() /     "Payload.zip";
-    static const fs::path s_payloadIpa = path.parent_path() /     "Payload.ipa";
+    // Do our work in %temp% folder
+    char* envVarValue = nullptr;
+    size_t size = 0;
+    
+    _dupenv_s(&envVarValue, &size, "TEMP");
+    fs::path tempFolder = std::string(envVarValue, size) / fs::path("Runner2ipa");
 
-    CComBSTR fileToUnzip(s_runnerAppZip.string().c_str());
-    CComBSTR folderToUnzipTo(path.parent_path().string().c_str());
+    if (!envVarValue)
+    {
+        throw std::exception("Failed to get environment variable TEMP");
+    }
 
-    CComBSTR folderToZip(path.string().c_str());
-    CComBSTR folderToZipTo(s_payloadZip.string().c_str());
+    fs::create_directories(tempFolder);
+    fs::copy(path, tempFolder);
+
+    *pTempPath = tempFolder / path.filename();
+}
+
+
+void process(const fs::path &path, const fs::path &tempPath)
+{
+    const fs::path runnerAppZip = tempPath.parent_path() /  "Runner.app.zip";
+    const fs::path payloadZip = tempPath.parent_path() /    "Payload.zip";
+    const fs::path payloadIpa = path.parent_path() /        "Payload.ipa";
+
+    CComBSTR fileToUnzip(runnerAppZip.string().c_str());
+    CComBSTR folderToUnzipTo(tempPath.parent_path().string().c_str());
+
+    CComBSTR folderToZip(tempPath.string().c_str());
+    CComBSTR folderToZipTo(payloadZip.string().c_str());
 
 
     std::cout << "Processing..." << std::endl;
 
-    fs::rename(path, s_runnerAppZip);                                       //Runner.app to Runner.app.zip
+    fs::rename(tempPath, runnerAppZip);                                 // Runner.app to Runner.app.zip
 
-    if (!Unzip2Folder(fileToUnzip, folderToUnzipTo))                        //Unzip Runner.app.zip to Runner.app (Folder)
+    if (!Unzip2Folder(fileToUnzip, folderToUnzipTo))                    // Unzip Runner.app.zip to Runner.app (Folder)
     {
         throw std::exception("Unzipping failed");
     }
 
-    if (!zipFolder(folderToZip, folderToZipTo, s_payloadZip.string()))      //Zip folder Runner.app into Payload.zip
+    if (!zipFolder(folderToZip, folderToZipTo, payloadZip.string()))    // Zip folder Runner.app into Payload.zip
     {
         throw std::exception("Zipping failed");
     }
 
-    fs::rename(s_payloadZip, s_payloadIpa);                                 //Rename Payload.zip to Payload.ipa
-
-    fs::remove_all(path);                                                   //Remove folder Runner.app
-
-    fs::rename(s_runnerAppZip, path);                                       //Rename Runner.app.zip back to Runner.app
+    fs::rename(payloadZip, payloadIpa);                                 // Rename Payload.zip to Payload.ipa and Move
+    std::cout << "\nSuccess: " << payloadIpa.string() << std::endl;
 }
 
 
-void cleanUp(const fs::path &path)
+void removeParent(const fs::path &tempPath)
 {
-    //Put everything back to the way we found it (Except for Payload.ipa)
-
-    static const fs::path s_runnerAppZip = path.parent_path() /   "Runner.app.zip";
-    static const fs::path s_payloadZip = path.parent_path() /     "Payload.zip";
-
-    if (fs::exists(path) && fs::is_directory(path))
+    //Delete our temporary working folder
+    if (fs::exists(tempPath.parent_path()))
     {
-        fs::remove_all(path);
-    }
-
-    if (fs::exists(s_runnerAppZip) && !fs::exists(path))
-    {
-        fs::rename(s_runnerAppZip, path);
-    }
-    
-    if (fs::exists(s_payloadZip))
-    {
-        fs::remove_all(s_payloadZip);
+        fs::remove_all(tempPath.parent_path());
     }
 }
 
@@ -98,17 +102,29 @@ int main(int argc, char* argv[])
     std::cout << "Convert Runner.app to Payload.ipa" << std::endl;
 
     fs::path path;
+    fs::path tempPath;
+
     try
     {
         if (argc == 1)
         {
             getFile(path);
+
+            if (path.filename().empty())
+            {
+                // User clicked cancel
+                return EXIT_SUCCESS;
+            }
         }
         else
         {
             path = argv[1];
 
-            if (fs::is_directory(path))
+            if (!fs::exists(path))
+            {
+                throw std::invalid_argument("File doesn't exist - " + path.string());
+            }
+            else if (fs::is_directory(path))
             {
                 throw std::invalid_argument("Expected file but got directory - " + path.string());
             }
@@ -119,7 +135,8 @@ int main(int argc, char* argv[])
             throw std::invalid_argument("Expected Runner.app but got - " + path.filename().string());
         }
         
-        process(path);
+        copyToTemp(path, &tempPath);
+        process(path, tempPath);
     }
     catch (std::exception ex)
     {
@@ -127,9 +144,9 @@ int main(int argc, char* argv[])
         exitCode = EXIT_FAILURE;
     }
 
-    cleanUp(path);
-    std::cout << "Exiting in 3 Seconds" << std::endl;
-    Sleep(3000);
+    removeParent(tempPath);
 
+    std::cout << "Exiting in 5 seconds" << std::endl;
+    Sleep(5000);
     return exitCode;
 }

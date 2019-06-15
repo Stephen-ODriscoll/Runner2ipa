@@ -11,6 +11,7 @@ bool zipFolder(BSTR source, BSTR dest, std::string destString)
     fopen_s(&f, destString.c_str(), "wb");
     fwrite("\x50\x4B\x05\x06\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", 22, 1, f);
     fclose(f);
+    Sleep(500);
 
     long FilesCount = 0;
     IShellDispatch *pISD;
