@@ -33,7 +33,7 @@ void getFile(fs::path &path)
 }
 
 
-void copyToTemp(fs::path &path, fs::path* pTempPath)
+void copyToTemp(const fs::path &path, fs::path* pTempPath)
 {
     // Do our work in %temp% folder
     char* envVarValue = nullptr;
@@ -86,7 +86,6 @@ void process(const fs::path &path, const fs::path &tempPath)
     }
 
     fs::rename(payloadZip, payloadIpa);                                 // Rename Payload.zip to Payload.ipa and Move
-    std::cout << "\nSuccess: " << payloadIpa.string() << std::endl;
 }
 
 
@@ -144,13 +143,13 @@ int main(int argc, char* argv[])
     }
     catch (std::exception ex)
     {
-        std::cout << "Error: " << ex.what() << std::endl;
+        std::cout << "Error: " << ex.what() << "\n";
+        std::cout << "Exiting in 5 seconds" << std::endl;
+
         exitCode = EXIT_FAILURE;
+        Sleep(5000);
     }
 
     removeParent(tempPath);
-
-    std::cout << "Exiting in 5 seconds" << std::endl;
-    Sleep(5000);
     return exitCode;
 }
