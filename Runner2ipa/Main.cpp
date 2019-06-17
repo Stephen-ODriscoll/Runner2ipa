@@ -36,16 +36,7 @@ void getFile(fs::path &path)
 void copyToTemp(const fs::path &path, fs::path* pTempPath)
 {
     // Do our work in %temp% folder
-    char* envVarValue = nullptr;
-    size_t size = 0;
-    
-    _dupenv_s(&envVarValue, &size, "TEMP");
-    fs::path tempFolder = std::string(envVarValue, size) / fs::path("Runner2ipa");
-
-    if (!envVarValue)
-    {
-        throw std::exception("Failed to get environment variable TEMP");
-    }
+    fs::path tempFolder = fs::temp_directory_path() / "Runner2ipa";
 
     fs::create_directories(tempFolder);
     fs::copy(path, tempFolder);
