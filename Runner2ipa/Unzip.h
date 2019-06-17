@@ -48,7 +48,7 @@ bool Unzip2Folder(BSTR lpZipFile, BSTR lpFolder)
         }
 
         pFilesInside->get_Count(&FilesCount);
-        //if (FilesCount < 1)                   Use this if you want a unzip a folder with more than one item inside
+        //if (FilesCount < 1)                   Use this if you want to unzip a folder with more than one item inside
         if (FilesCount != 1)
         {
             pFilesInside->Release();
