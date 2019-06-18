@@ -52,11 +52,11 @@ void process(const fs::path &path, const fs::path &tempPath)
     const fs::path payloadZip = tempPath.parent_path() /    "Payload.zip";
     const fs::path payloadIpa = path.parent_path() /        "Payload.ipa";
 
-    CComBSTR fileToUnzip(runnerAppZip.string().c_str());
-    CComBSTR folderToUnzipTo(tempPath.parent_path().string().c_str());
+    CComBSTR fileToUnzip(runnerAppZip.c_str());
+    CComBSTR folderToUnzipTo(tempPath.parent_path().c_str());
 
-    CComBSTR folderToZip(payload.string().c_str());
-    CComBSTR folderToZipTo(payloadZip.string().c_str());
+    CComBSTR folderToZip(payload.c_str());
+    CComBSTR folderToZipTo(payloadZip.c_str());
 
 
     std::cout << "Processing..." << std::endl;
