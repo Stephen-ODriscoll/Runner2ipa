@@ -65,7 +65,7 @@ void process(const fs::path &path, const fs::path &tempPath)
 
     if (!Unzip2Folder(fileToUnzip, folderToUnzipTo))                    // Unzip Runner.app.zip to Runner.app (Folder)
     {
-        throw std::exception("Unzipping failed");
+        throw std::runtime_error("Unzipping failed");
     }
 
     fs::create_directories(payload);                                    // Create folder called Payload
@@ -73,7 +73,7 @@ void process(const fs::path &path, const fs::path &tempPath)
 
     if (!zipFolder(folderToZip, folderToZipTo, payloadZip.string()))    // Zip folder Payload into Payload.zip
     {
-        throw std::exception("Zipping failed");
+        throw std::runtime_error("Zipping failed");
     }
 
     fs::rename(payloadZip, payloadIpa);                                 // Rename Payload.zip to Payload.ipa and Move
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
         copyToTemp(path, &tempPath);
         process(path, tempPath);
     }
-    catch (std::exception ex)
+    catch (std::exception &ex)
     {
         std::cout << "Error: " << ex.what() << "\n";
         std::cout << "Exiting in 5 seconds" << std::endl;
